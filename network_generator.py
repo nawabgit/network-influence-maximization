@@ -1,16 +1,17 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-from networkx import empty_graph
 from networkx.utils import py_random_state
 from utils import _random_subset
+import random
+random.seed(10)
 
 
 class Graph:
 
     @py_random_state(3)
     def barabasi_albert_graph(self, n, m, seed=None):
-        """Returns a random graph according to the Barabási–Albert preferential
-        attachment model.
+        """Returns a sequences of random graphs according to the Barabási–Albert
+        preferential attachment model.
 
         A graph of $n$ nodes is grown by attaching new nodes each with $m$
         edges that are preferentially attached to existing nodes with high degree.
@@ -27,7 +28,7 @@ class Graph:
 
         Returns
         -------
-        G : Graph
+        G : Graph instance generator
 
         Raises
         ------
@@ -45,36 +46,47 @@ class Graph:
                 f"Barabási–Albert network must have m >= 1 and m < n, m = {m}, n = {n}"
             )
 
+        # The basic config that all nodes will have
+        config = {"active": False}
+
         # Add m initial nodes (m0 in barabasi-speak)
-        G = empty_graph(m)
+        G = nx.Graph()
+        initial_nodes = [(node, config) for node in range(m)]
+        G.add_nodes_from(initial_nodes)
 
         # Target nodes for new edges
         targets = list(range(m))
+
         # List of existing nodes, with nodes repeated once for each adjacent edge
+        # This is a cheeky way of achieving preferential attachment
         repeated_nodes = []
+
         # Start adding the other n-m nodes. The first node is m.
-        source = m
-        while source < n:
-            # Add edges to m nodes from the source.
-            G.add_edges_from(zip([source] * m, targets))
+        new_node = m
+        while new_node < n:
+            # Add edges to m nodes from the new node with associated activation probability
+            activation_probs = [{"p": random.uniform(0, 1)} for _ in range(m)]
+            G.add_node(new_node, **config)
+            G.add_edges_from(zip([new_node] * m, targets, activation_probs))
+
             # Add one node to the list for each new edge just created.
             repeated_nodes.extend(targets)
-            # And the new node "source" has m edges to add to the list.
-            repeated_nodes.extend([source] * m)
+            # And the new node has m edges to add to the list.
+            repeated_nodes.extend([new_node] * m)
             # Now choose m unique nodes from the existing nodes
             # Pick uniformly from repeated_nodes (preferential attachment)
             targets = _random_subset(repeated_nodes, m, seed)
-            source += 1
+            new_node += 1
 
-            yield G
+            # Yield this time instance
+            yield G.copy()
 
 
 graph_generator = Graph()
-G = graph_generator.barabasi_albert_graph(10, 2)
-
+graphs = list(graph_generator.barabasi_albert_graph(10, 2))
 
 i=0
-for g_t in G:
+for g_t in graphs:
     print(i)
     nx.draw(g_t)
     plt.show()
