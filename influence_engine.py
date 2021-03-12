@@ -83,13 +83,16 @@ class InfluenceEngine:
 
         # Run the simulation for each graph instance
         for t, G_t in enumerate(self.G):
-
+            # Attempt activation of neighbour nodes from t-1
+            # Prime for next time step
+            last_activated = self.attempt_neighbour_activation(t, last_activated)
 
             # Activate the seed nodes for this time step
             self.activate_nodes(t, initial_nodes[t])
-
             # Prime seed nodes for the next time step
             last_activated.extend(initial_nodes[t])
 
+        # Retrieve all activated nodes in the final graph instance
+        influence = len([x for x, y in self.G[-1].nodes(data=True) if y['active'] == True ])
 
-
+        return influence
