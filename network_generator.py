@@ -10,7 +10,7 @@ random.seed(10)
 
 class Graph:
 
-    def bianconi_barabasi_graph(self, n, m, seed=None):
+    def bianconi_barabasi_graph(self, n, m, seed=None, initial_size=3):
         """Returns a sequences of random graphs according to the Bianconi–Barabási
         preferential attachment model.
 
@@ -27,6 +27,8 @@ class Graph:
         seed : integer, random_state, or None (default)
             Indicator of random number generation state.
             See :ref:`Randomness<randomness>`.
+        initial_size : int
+            The initial number of nodes before a graph instance is yielded
 
         Returns
         -------
@@ -79,11 +81,12 @@ class Graph:
 
             new_node += 1
 
-            # Yield this time instance
-            yield G.copy()
+            # Yield this time instance if the initial size is met
+            if new_node >= initial_size:
+                yield G.copy()
 
     @py_random_state(3)
-    def barabasi_albert_graph(self, n, m, seed=None):
+    def barabasi_albert_graph(self, n, m, seed=None, initial_size=3):
         """Returns a sequences of random graphs according to the Barabási–Albert
         preferential attachment model.
 
@@ -99,6 +102,8 @@ class Graph:
         seed : integer, random_state, or None (default)
             Indicator of random number generation state.
             See :ref:`Randomness<randomness>`.
+        initial_size : int
+            The initial number of nodes before a graph instance is yielded
 
         Returns
         -------
@@ -152,12 +157,13 @@ class Graph:
             targets = _random_subset(repeated_nodes, m, seed)
             new_node += 1
 
-            # Yield this time instance
-            yield G.copy()
+            # Yield this time instance if the initial size is met
+            if new_node >= initial_size:
+                yield G.copy()
 
-
+"""
 graph_generator = Graph()
-graphs = list(graph_generator.bianconi_barabasi_graph(10, 2))
+graphs = list(graph_generator.bianconi_barabasi_graph(50, 2))
 
 i=0
 for g_t in graphs:
@@ -167,3 +173,4 @@ for g_t in graphs:
     nx.draw(g_t, labels=labels, with_labels=True)
     plt.show()
     i+=1
+"""
