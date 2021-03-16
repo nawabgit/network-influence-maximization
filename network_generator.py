@@ -10,7 +10,7 @@ random.seed(10)
 
 class Graph:
 
-    def bianconi_barabasi_graph(self, n, m, seed=None, initial_size=3):
+    def bianconi_barabasi_graph(self, n, m, seed=None, initial_size=3, step=1):
         """Returns a sequences of random graphs according to the Bianconi–Barabási
         preferential attachment model.
 
@@ -29,6 +29,8 @@ class Graph:
             See :ref:`Randomness<randomness>`.
         initial_size : int
             The initial number of nodes before a graph instance is yielded
+        step: int
+            The amount of nodes added before a new graph instance is yielded
 
         Returns
         -------
@@ -64,7 +66,7 @@ class Graph:
         new_node = m
         while new_node < n:
             # Add edges to m nodes from the new node with associated activation probability
-            activation_probs = [{"p": random.uniform(0, 1)} for _ in range(m)]
+            activation_probs = [{"p": random.uniform(0, 1), "live": False} for _ in range(m)]
             G.add_node(new_node, **{"active": False, "eta": random.uniform(0, 1)})
             G.add_edges_from(zip([new_node] * m, targets, activation_probs))
 
@@ -81,12 +83,12 @@ class Graph:
 
             new_node += 1
 
-            # Yield this time instance if the initial size is met
-            if new_node >= initial_size:
+            # Yield this time instance if the initial size is met and correct step
+            if new_node >= initial_size and new_node % step == 0:
                 yield G.copy()
 
     @py_random_state(3)
-    def barabasi_albert_graph(self, n, m, seed=None, initial_size=3):
+    def barabasi_albert_graph(self, n, m, seed=None, initial_size=3, step=1):
         """Returns a sequences of random graphs according to the Barabási–Albert
         preferential attachment model.
 
@@ -104,6 +106,8 @@ class Graph:
             See :ref:`Randomness<randomness>`.
         initial_size : int
             The initial number of nodes before a graph instance is yielded
+        step: int
+            The amount of nodes added before a new graph instance is yielded
 
         Returns
         -------
@@ -144,7 +148,7 @@ class Graph:
         new_node = m
         while new_node < n:
             # Add edges to m nodes from the new node with associated activation probability
-            activation_probs = [{"p": random.uniform(0, 1)} for _ in range(m)]
+            activation_probs = [{"p": random.uniform(0, 1), "live": False} for _ in range(m)]
             G.add_node(new_node, **config)
             G.add_edges_from(zip([new_node] * m, targets, activation_probs))
 
@@ -158,7 +162,7 @@ class Graph:
             new_node += 1
 
             # Yield this time instance if the initial size is met
-            if new_node >= initial_size:
+            if new_node >= initial_size and new_node % step == 0:
                 yield G.copy()
 
 """
