@@ -1,7 +1,7 @@
 from collections import defaultdict
 import networkx as nx
 from matplotlib import pyplot as plt
-
+import time
 import random
 random.seed(10)
 
@@ -13,6 +13,18 @@ class InfluenceEngine:
         :param G: The set of Graph instances
         """
         self.G = G
+
+    def refresh_state(self):
+        """
+        Reset the state of the Graph
+        """
+        for G_t in self.G:
+            # Refresh all nodes
+            for node in G_t.nodes:
+                G_t.nodes[node]["active"] = False
+            # Refresh all edges
+            for e in G_t.edges:
+                G_t.edges[e]["live"] = False
 
     def get_all_nodes(self):
         """
@@ -84,7 +96,7 @@ class InfluenceEngine:
         nx.draw_spring(self.G[t], node_color=color_map, edge_color=edge_color_map, with_labels=True)
         plt.show()
 
-    def simulate_independent_cascade(self, initial_nodes):
+    def simulate_independent_cascade(self, initial_nodes, draw=False):
         """
         Runs a transient independent cascade simulation on the graph given a set of initial nodes
         Simulation will terminate if either
@@ -92,10 +104,12 @@ class InfluenceEngine:
         b) The deadline is reached ( len(G) )
 
         :param initial_nodes: Int -> { Node } Mapping of time to nodes that will be manually activated
+        :param draw: Boolean specifying if each time step should be visually displayed
         :return: Total achieved influence
         """
         # Track the nodes that were activated in the previous time step
         last_activated = []
+        self.refresh_state()
 
         # Run the simulation for each graph instance
         for t, G_t in enumerate(self.G):
@@ -107,7 +121,8 @@ class InfluenceEngine:
             self.activate_nodes(t, initial_nodes[t])
             # Prime seed nodes for the next time step
             last_activated.extend(initial_nodes[t])
-            self.draw_graph(t)
+            if draw:
+                self.draw_graph(t)
 
         # Retrieve all activated nodes in the final graph instance
         influence = len([x for x, y in self.G[-1].nodes(data=True) if y['active']])
