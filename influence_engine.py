@@ -1,7 +1,6 @@
 from collections import defaultdict
 import networkx as nx
 from matplotlib import pyplot as plt
-import time
 import random
 random.seed(10)
 
@@ -10,7 +9,7 @@ class InfluenceEngine:
 
     def __init__(self, G):
         """
-        :param G: The set of Graph instances
+        :param G: The set of MultiGraph instances
         """
         self.G = G
 
@@ -70,13 +69,15 @@ class InfluenceEngine:
             for neighbour in neighbours:
                 # Attempt, if the neighbour hasn't already been activated
                 if not G_t.nodes[neighbour]['active']:
-                    p = G_t[node][neighbour]['p']
-                    G_t[node][neighbour]['live'] = True
-                    outcome = random.uniform(0, 1)
+                    # MultiGraphs can have multiple edges between nodes
+                    for edge_id, data in G_t.get_edge_data(1, 2).items():
+                        p = data['p']
+                        G_t[node][neighbour][edge_id]['live'] = True
+                        outcome = random.uniform(0, 1)
 
-                    # Store the neighbour for activation if within CDF
-                    if outcome <= p:
-                        activations.append(neighbour)
+                        # Store the neighbour for activation if within CDF
+                        if outcome <= p:
+                            activations.append(neighbour)
 
         # Activate successful nodes
         self.activate_nodes(t, activations)
@@ -91,7 +92,7 @@ class InfluenceEngine:
         :param t:
         """
         color_map = ['green' if self.G[t].nodes[node]['active'] else 'red' for node in self.G[t].nodes()]
-        edge_color_map = ['red' if self.G[t][e1][e2]['live'] else 'black' for e1, e2 in self.G[t].edges]
+        edge_color_map = ['red' if self.G[t][e1][e2][e3]['live'] else 'black' for e1, e2, e3 in self.G[t].edges]
 
         nx.draw_spring(self.G[t], node_color=color_map, edge_color=edge_color_map, with_labels=True)
         plt.show()
