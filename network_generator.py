@@ -1,5 +1,4 @@
 import networkx as nx
-import matplotlib.pyplot as plt
 from networkx.utils import py_random_state
 from utils import _random_subset
 import random
@@ -55,7 +54,7 @@ class Graph:
         config = {"active": False}
 
         # Add m initial nodes (m0 in barabasi-speak)
-        G = nx.Graph()
+        G = nx.MultiGraph()
         initial_nodes = [(node, {"active": False, "eta": random.uniform(0, 1)}) for node in range(m)]
         G.add_nodes_from(initial_nodes)
 
@@ -133,7 +132,7 @@ class Graph:
         config = {"active": False}
 
         # Add m initial nodes (m0 in barabasi-speak)
-        G = nx.Graph()
+        G = nx.MultiGraph()
         initial_nodes = [(node, config) for node in range(m)]
         G.add_nodes_from(initial_nodes)
 
