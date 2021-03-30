@@ -49,7 +49,9 @@ class InfluenceEngine:
 
         for G_t in self.G[t:]:
             for node in nodes:
-                G_t.nodes[node]["active"] = True
+                # Node may not exist in this time instance
+                if node in G_t:
+                    G_t.nodes[node]["active"] = True
 
     def attempt_neighbour_activation(self, t, nodes):
         """
@@ -64,20 +66,22 @@ class InfluenceEngine:
         G_t = self.G[t]
 
         for node in nodes:
-            neighbours = G_t.neighbors(node)
+            # This node from t-1 may not exist anymore!
+            if node in G_t.nodes:
+                neighbours = G_t.neighbors(node)
 
-            for neighbour in neighbours:
-                # Attempt, if the neighbour hasn't already been activated
-                if not G_t.nodes[neighbour]['active']:
-                    # MultiGraphs can have multiple edges between nodes
-                    for edge_id, data in G_t.get_edge_data(1, 2).items():
-                        p = data['p']
-                        G_t[node][neighbour][edge_id]['live'] = True
-                        outcome = random.uniform(0, 1)
+                for neighbour in neighbours:
+                    # Attempt, if the neighbour hasn't already been activated
+                    if not G_t.nodes[neighbour]['active']:
+                        # MultiGraphs can have multiple edges between nodes
+                        for edge_id, data in G_t.get_edge_data(node, neighbour).items():
+                            p = data['p']
+                            G_t[node][neighbour][edge_id]['live'] = True
+                            outcome = random.uniform(0, 1)
 
-                        # Store the neighbour for activation if within CDF
-                        if outcome <= p:
-                            activations.append(neighbour)
+                            # Store the neighbour for activation if within CDF
+                            if outcome <= p:
+                                activations.append(neighbour)
 
         # Activate successful nodes
         self.activate_nodes(t, activations)
