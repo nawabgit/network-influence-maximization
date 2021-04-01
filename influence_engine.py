@@ -2,7 +2,6 @@ from collections import defaultdict
 import networkx as nx
 from matplotlib import pyplot as plt
 import random
-random.seed(10)
 
 
 class InfluenceEngine:
