@@ -2,6 +2,7 @@ from collections import defaultdict
 import networkx as nx
 from matplotlib import pyplot as plt
 import random
+import Cython
 
 
 class InfluenceEngine:
@@ -32,7 +33,7 @@ class InfluenceEngine:
         """
         nodes = defaultdict(set)
 
-        for t, g_t in enumerate(self.G[:-1]):
+        for t, g_t in enumerate(self.G):
             for node in g_t.nodes():
                 nodes[t].add(node)
 
@@ -48,9 +49,7 @@ class InfluenceEngine:
 
         for G_t in self.G[t:]:
             for node in nodes:
-                # Node may not exist in this time instance
-                if node in G_t:
-                    G_t.nodes[node]["active"] = True
+                G_t.nodes[node]["active"] = True
 
     def attempt_neighbour_activation(self, t, nodes):
         """
@@ -65,22 +64,20 @@ class InfluenceEngine:
         G_t = self.G[t]
 
         for node in nodes:
-            # This node from t-1 may not exist anymore!
-            if node in G_t.nodes:
-                neighbours = G_t.neighbors(node)
+            neighbours = G_t.neighbors(node)
 
-                for neighbour in neighbours:
-                    # Attempt, if the neighbour hasn't already been activated
-                    if not G_t.nodes[neighbour]['active']:
-                        # MultiGraphs can have multiple edges between nodes
-                        for edge_id, data in G_t.get_edge_data(node, neighbour).items():
-                            p = data['p']
-                            G_t[node][neighbour][edge_id]['live'] = True
-                            outcome = random.uniform(0, 1)
+            for neighbour in neighbours:
+                # Attempt, if the neighbour hasn't already been activated
+                if not G_t.nodes[neighbour]['active']:
+                    # MultiGraphs can have multiple edges between nodes
+                    for edge_id, data in G_t.get_edge_data(node, neighbour).items():
+                        p = data['p']
+                        G_t[node][neighbour][edge_id]['live'] = True
+                        outcome = random.uniform(0, 1)
 
-                            # Store the neighbour for activation if within CDF
-                            if outcome <= p:
-                                activations.append(neighbour)
+                        # Store the neighbour for activation if within CDF
+                        if outcome <= p:
+                            activations.append(neighbour)
 
         # Activate successful nodes
         self.activate_nodes(t, activations)
@@ -117,10 +114,6 @@ class InfluenceEngine:
 
         # Run the simulation for each graph instance
         for t, G_t in enumerate(self.G):
-            # Attempt activation of neighbour nodes from t-1
-            # Prime for next time step
-            last_activated = self.attempt_neighbour_activation(t, last_activated)
-
             # Activate the seed nodes for this time step
             self.activate_nodes(t, initial_nodes[t])
             # Prime seed nodes for the next time step
@@ -128,7 +121,13 @@ class InfluenceEngine:
             if draw:
                 self.draw_graph(t)
 
-        # Retrieve all activated nodes in the final graph instance
+            # Attempt activation of neighbour nodes from t-1
+            # Prime for next time step
+            last_activated = self.attempt_neighbour_activation(t, last_activated)
+            if draw:
+                self.draw_graph(t)
+
+
         influence = len([x for x, y in self.G[-1].nodes(data=True) if y['active']])
 
         return influence
